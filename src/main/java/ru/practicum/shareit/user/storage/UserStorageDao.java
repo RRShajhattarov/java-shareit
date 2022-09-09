@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user.storage;
 
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.Collection;
@@ -13,7 +14,7 @@ public interface UserStorageDao {
 
     User add(User user);
 
-    User update(User user, int userId);
+    User update(UserDto user, int userId);
 
     void deleteUser(int userId);
 

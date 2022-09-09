@@ -3,6 +3,7 @@ package ru.practicum.shareit.user;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.storage.UserStorage;
 import ru.practicum.shareit.user.storage.UserStorageDao;
@@ -22,7 +23,8 @@ public class UserService {
         return userStorage.add(user);
     }
 
-    public User update(User user, int userId) {
+    public User update(UserDto user, int userId) {
+
         return userStorage.update(user, userId);
     }
 

@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.user.model.User;
+
+import java.util.concurrent.RecursiveTask;
 
 /**
  * TODO Sprint add-controllers.
@@ -15,6 +18,7 @@ import ru.practicum.shareit.request.ItemRequest;
 public class ItemDto {
     private String name;
     private String description;
-    private boolean available;
-    private int request;
+    private Boolean available;
+    private ItemRequest requestId;
+
 }
