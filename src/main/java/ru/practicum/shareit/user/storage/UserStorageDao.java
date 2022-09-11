@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserStorageDao {
-    Collection<User> findAll();
+    List<UserDto> findAll();
 
     User findById(int id);
 

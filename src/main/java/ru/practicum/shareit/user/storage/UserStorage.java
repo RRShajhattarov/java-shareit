@@ -3,8 +3,10 @@ package ru.practicum.shareit.user.storage;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.user.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.ArrayList;
@@ -17,12 +19,16 @@ import java.util.List;
 @Repository
 public class UserStorage implements UserStorageDao {
     private final HashMap<Integer, User> users = new HashMap<>();
-    List<String> emailList = new ArrayList<>();
-    int id = 1;
+    private List<String> emailList = new ArrayList<>();
+    private int id = 1;
 
     @Override
-    public Collection<User> findAll() {
-        return users.values();
+    public List<UserDto> findAll() {
+        List<UserDto> userDtos = new ArrayList<>();
+        for (int i : users.keySet()) {
+            userDtos.add(UserMapper.toUserDto(users.get(i)));
+        }
+        return userDtos;
     }
 
     @Override

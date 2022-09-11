@@ -5,31 +5,32 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.exception.UserIdNotValidation;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.ValidationException;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.*;
+
 
 
 @Component
 public class ItemStorage implements ItemStorageDao {
 
     private final HashMap<Integer, Item> items = new HashMap<>();
-    int id =1;
+    private int id =1;
     @Override
-    public List<Item> findAllItems(int userId) {
-        List<Item> userItems = new ArrayList<>();
+    public List<ItemDto> findAllItems(int userId) {
+        List<ItemDto> userItem = new ArrayList<>();
+
         for (int i : items.keySet()) {
             if (items.get(i).getOwner().getId() == userId) {
-                userItems.add(items.get(i));
+                userItem.add(ItemMapper.toItemDto(items.get(i)));
             }
         }
-        return userItems;
+        return userItem;
     }
 
     @Override
-    public List<Item> search(String text) {
-        List<Item> searchItems = new ArrayList<>();
+    public List<ItemDto> search(String text) {
+        List<ItemDto> searchItems = new ArrayList<>();
 
         if (Objects.equals(text, "") || text == null) {
             return searchItems;
@@ -39,7 +40,7 @@ public class ItemStorage implements ItemStorageDao {
             if (items.get(i).getName().toLowerCase().contains(text.toLowerCase()) ||
                     items.get(i).getDescription().toLowerCase().contains(text.toLowerCase()) &&
                             items.get(i).getAvailable()) {
-                searchItems.add(items.get(i));
+                searchItems.add(ItemMapper.toItemDto(items.get(i)));
             }
         }
         return searchItems;
@@ -54,8 +55,8 @@ public class ItemStorage implements ItemStorageDao {
     }
 
     @Override
-    public Item add(User user, ItemDto item) {
-        items.put(id, ItemMapper.toItem(item, id, user));
+    public Item add(User user, ItemDto itemDto) {
+        items.put(id, ItemMapper.toItem(itemDto, id, user));
         id++;
         return items.get(id-1);
     }
@@ -76,10 +77,5 @@ public class ItemStorage implements ItemStorageDao {
             items.get(itemId).setAvailable(item.getAvailable());
         }
         return items.get(itemId);
-    }
-
-    @Override
-    public void deleteUser(int itemId) {
-
     }
 }
