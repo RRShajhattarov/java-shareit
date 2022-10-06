@@ -7,6 +7,7 @@ import ru.practicum.shareit.item.model.Item;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,26 +17,26 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping
-    public ItemDto add(@RequestHeader(value="X-Sharer-User-Id") int userId,
+    public ItemDto add(@RequestHeader(value="X-Sharer-User-Id") Long userId,
     @Valid @RequestBody ItemDto itemDto) {
         return itemService.add(userId,itemDto);
     }
 
     @PatchMapping("{itemId}")
-    public ItemDto update(@PathVariable Integer itemId,
-                       @RequestHeader(value="X-Sharer-User-Id") int userId,
-                       @RequestBody Item item) {
-        return itemService.update(itemId, userId, item);
+    public ItemDto update(@PathVariable Long itemId,
+                       @RequestHeader(value="X-Sharer-User-Id") Long userId,
+                       @RequestBody ItemDto itemDto) {
+        return itemService.update(itemId, userId, itemDto);
     }
 
     @GetMapping("{itemId}")
-    public ItemDto findById(@PathVariable Integer itemId,
-                         @RequestHeader(value="X-Sharer-User-Id") int userId) {
+    public ItemDto findById(@PathVariable Long itemId,
+                                   @RequestHeader(value="X-Sharer-User-Id") Long userId) {
         return itemService.findItemById(itemId, userId);
     }
 
     @GetMapping
-    public List<ItemDto> findAllItems(@RequestHeader(value="X-Sharer-User-Id") int userId) {
+    public List<ItemDto> findAllItems(@RequestHeader(value="X-Sharer-User-Id") Long userId) {
         return itemService.findAllItems(userId);
     }
 

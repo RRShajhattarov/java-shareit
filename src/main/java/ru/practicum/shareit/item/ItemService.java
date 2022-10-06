@@ -8,25 +8,29 @@ import ru.practicum.shareit.item.exception.NotAvailableException;
 import ru.practicum.shareit.item.exception.UserIdNotValidation;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.storage.ItemStorageDao;
-import ru.practicum.shareit.user.storage.UserStorageDao;
+import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
+import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.storage.UserRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 
 @Service
 @RequiredArgsConstructor
 public class ItemService {
 
-    private final ItemStorageDao itemStorageDao;
-    private final UserStorageDao userStorageDao;
+    private final ItemRepository itemRepository;
+    private final UserRepository userRepository;
 
-    public ItemDto add(int userId, ItemDto itemDto) {
+    public ItemDto add(Long userId, ItemDto itemDto) {
 
-        if (userStorageDao.findById(userId) == null) {
-            throw new UserIdNotValidation("Пользователь с id " + userId + " не найден.");
-        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserIdNotValidation("Пользователь с id " + userId + " не найден."));
 
         if (Objects.equals(itemDto.getName(), "") || itemDto.getName() == null ||
                 itemDto.getDescription() == null || Objects.equals(itemDto.getDescription(), "")) {
@@ -36,31 +40,50 @@ public class ItemService {
         if (itemDto.getAvailable() == null) {
             throw new NotAvailableException("Укажите доступность предмета.");
         }
-
-        return ItemMapper.toItemDto(itemStorageDao.add(userStorageDao.findById(userId), itemDto));
+        Item item = ItemMapper.toItem(itemDto, user);
+        return ItemMapper.toItemDto(itemRepository.save(item));
 
     }
 
-    public ItemDto update(Integer itemId, int userId, Item item) {
-        if (userStorageDao.findById(userId) == null) {
-            throw new UserIdNotValidation("Пользователь с id " + userId + " не найден.");
+    public ItemDto update(Long itemId, Long userId, ItemDto itemDto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserIdNotValidation("Пользователь с id " + userId + " не найден."));
+        if (itemRepository.findById(itemId).get().getOwner().getId() != userId) {
+            throw new UserIdNotValidation("Данный товар пренадлежит другому пользователю!");
         }
-
-        return ItemMapper.toItemDto(itemStorageDao.update(item, itemId, userId));
+        Item item = ItemMapper.toItem(itemDto, user);
+        item.setId(itemId);
+        return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
-    public ItemDto findItemById(Integer itemId, int userId) {
-        if (userStorageDao.findById(userId) == null) {
-            throw new UserIdNotValidation("Пользователь с id " + userId + " не найден.");
+    public ItemDto findItemById(Long itemId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserIdNotValidation("Пользователь с id " + userId + " не найден."));
+        if (itemRepository.findById(itemId).get().getOwner().getId() != userId) {
+            throw new UserIdNotValidation("Данный товар пренадлежит другому пользователю!");
         }
-        return ItemMapper.toItemDto(itemStorageDao.findById(itemId, userId));
+        Item item = itemRepository.findById(itemId).orElseThrow(() -> new EmptyNameItemException("Вещь с id " + itemId + " не найден!"));
+        return ItemMapper.toItemDto(item);
     }
 
-    public List<ItemDto> findAllItems(int userId) {
-        return itemStorageDao.findAllItems(userId);
+    public List<ItemDto> findAllItems(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserIdNotValidation("Пользователь с id " + userId + " не найден."));
+
+        List<Item> items = itemRepository.findAllByOwner(user);
+        List<ItemDto> itemDtos = new ArrayList<>();
+        for (Item i : items) {
+            itemDtos.add(ItemMapper.toItemDto(i));
+        }
+        return itemDtos;
     }
 
     public List<ItemDto> search(String text) {
-        return itemStorageDao.search(text);
+        List<Item> items = itemRepository.search(text);
+        List<ItemDto> itemDtos = new ArrayList<>();
+        for (Item i : items) {
+            itemDtos.add(ItemMapper.toItemDto(i));
+        }
+        return itemDtos;
     }
 }
