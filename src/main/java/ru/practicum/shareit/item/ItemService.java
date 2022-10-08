@@ -3,21 +3,18 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.exception.EmptyNameItemException;
-import ru.practicum.shareit.item.exception.NotAvailableException;
-import ru.practicum.shareit.item.exception.UserIdNotValidation;
+import ru.practicum.shareit.exception.EmptyNameItemException;
+import ru.practicum.shareit.exception.NotAvailableException;
+import ru.practicum.shareit.exception.UserIdNotValidation;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
-import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.storage.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 
 @Service
@@ -40,24 +37,27 @@ public class ItemService {
         if (itemDto.getAvailable() == null) {
             throw new NotAvailableException("Укажите доступность предмета.");
         }
-        Item item = ItemMapper.toItem(itemDto, user);
+        itemDto.setOwner(user);
+        Item item = ItemMapper.toItem(itemDto);
         return ItemMapper.toItemDto(itemRepository.save(item));
 
     }
 
     public ItemDto update(Long itemId, Long userId, ItemDto itemDto) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new UserIdNotValidation("Пользователь с id " + userId + " не найден."));
-        if (itemRepository.findById(itemId).get().getOwner().getId() != userId) {
-            throw new UserIdNotValidation("Данный товар пренадлежит другому пользователю!");
-        }
-        Item item = ItemMapper.toItem(itemDto, user);
-        item.setId(itemId);
+        itemRepository.findById(itemId).ifPresent(i -> {
+            if(!i.getOwner().getId().equals(userId)) {
+                throw new UserIdNotValidation("Данный товар пренадлежит другому пользователю!");
+            }
+        });
+        itemDto.setId(itemId);
+        Item item = ItemMapper.toItem(itemDto);
         return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
     public ItemDto findItemById(Long itemId, Long userId) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new UserIdNotValidation("Пользователь с id " + userId + " не найден."));
         if (itemRepository.findById(itemId).get().getOwner().getId() != userId) {
             throw new UserIdNotValidation("Данный товар пренадлежит другому пользователю!");
