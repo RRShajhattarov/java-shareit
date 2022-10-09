@@ -6,6 +6,7 @@ import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
@@ -14,9 +15,9 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "start_date_time")
-    private LocalDate start;
+    private LocalDateTime start;
     @Column(name = "end_date_time")
-    private LocalDate end;
+    private LocalDateTime end;
     @ManyToOne
     @JoinColumn(name = "item_id")
     private Item item;
@@ -34,19 +35,19 @@ public class Booking {
         this.id = id;
     }
 
-    public LocalDate getStart() {
+    public LocalDateTime getStart() {
         return start;
     }
 
-    public void setStart(LocalDate start) {
+    public void setStart(LocalDateTime start) {
         this.start = start;
     }
 
-    public LocalDate getEnd() {
+    public LocalDateTime getEnd() {
         return end;
     }
 
-    public void setEnd(LocalDate end) {
+    public void setEnd(LocalDateTime end) {
         this.end = end;
     }
 
