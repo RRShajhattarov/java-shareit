@@ -4,13 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingLongDto;
+import ru.practicum.shareit.booking.dto.BookingWithDateDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.storage.BookingRepository;
 import ru.practicum.shareit.booking.validation.DateValidator;
 import ru.practicum.shareit.enums.BookingStateEnum;
 import ru.practicum.shareit.enums.BookingStatus;
+import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.DateInPastValidationException;
+import ru.practicum.shareit.exception.NotAvailableException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
@@ -55,54 +59,70 @@ public class BookingService {
         Optional<User> optUser = userRepository.findById(userId);
         User user = optUser.orElseThrow(() -> new NotFoundException("User doesn't exists"));
         if (!item.getAvailable()) {
-            throw new NullPointerException("Item doesn't available.");
+            throw new NotAvailableException("Item doesn't available.");
         }
         book.setItem(item);
         book.setBooker(user);
         book.setStatus(BookingStatus.WAITING);
     }
 
-    public BookingDto changeStatus(Long userId, Long bookingId, Boolean approved) {
+    public BookingLongDto changeStatus(Long userId, Long bookingId, Boolean approved) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User doesn't exists"));
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking doesn't exists"));
 
         if (!userId.equals(booking.getItem().getOwner().getId())) {
-            throw new ValidationException("You are not the owner of the item");
+            throw new NotFoundException("You are not the owner of the item");
+        }
+        if(approved && booking.getStatus().toString().equals("APPROVED")) {
+            throw new BadRequestException("The status " + "APPROVED" + " is already set");
         }
         if(approved) booking.setStatus(BookingStatus.APPROVED);
         else booking.setStatus(BookingStatus.REJECTED);
         bookingRepository.save(booking);
-        return BookingMapper.toBookingDto(booking);
+        return BookingMapper.toBookingLongDto(booking);
     }
 
-    public BookingDto getBooking(Long userId, Long bookingId) {
+    public BookingWithDateDto getBooking(Long userId, Long bookingId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User doesn't exists"));
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking doesn't exists"));
         if(!(userId.equals(booking.getItem().getOwner().getId()) || userId.equals(booking.getBooker().getId()))) {
-            throw new ValidationException("You are not the owner or booker");
+            throw new NotFoundException("You are not the owner or booker");
         }
-        return BookingMapper.toBookingDto(booking);
+        return BookingMapper.toBookingWithDateDto(booking);
     }
 
-    public List<BookingDto> getAllBookings(BookingStateEnum state, Long userId) {
+    public List<BookingWithDateDto> getAllBookings(String state, Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User doesn't exists"));
-        return null;
+        List<Booking> bookings = bookingRepository.getBookingsOfUser(userId);
+        checkState(state);
+        return getFromState(state, bookings).stream()
+                .map(BookingMapper::toBookingWithDateDto)
+                .collect(Collectors.toList());
     }
 
-    public List<BookingDto> getOwnerBookings(String state, Long userId) {
+    private void checkState(String state) {
+        List<String> stateList = new ArrayList<>();
+        for (BookingStateEnum s: new ArrayList<>(Arrays.asList(BookingStateEnum.values()))) {
+            stateList.add(s.toString());
+        }
+        if (!stateList.contains(state)) {
+            throw new BadRequestException("Unknown state: " + state);
+        }
+    }
+    public List<BookingWithDateDto> getOwnerBookings(String state, Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User doesn't exists"));
         List<Booking> bookings = bookingRepository.findAll().stream()
                 .filter(s -> Objects.equals(s.getItem().getOwner().getId(), userId))
                 .collect(Collectors.toList());
-
+        checkState(state);
         return getFromState(state, bookings).stream()
-                .map(BookingMapper::toBookingDto)
+                .map(BookingMapper::toBookingWithDateDto)
                 .collect(Collectors.toList());
     }
     private List<Booking> getFromState(String state, List<Booking> bookings) {

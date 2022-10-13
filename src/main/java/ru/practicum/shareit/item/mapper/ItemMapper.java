@@ -1,7 +1,12 @@
 package ru.practicum.shareit.item.mapper;
 
+import ru.practicum.shareit.booking.dto.BookingLongDto;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemGetDto;
 import ru.practicum.shareit.item.model.Item;
+
+import java.time.LocalDateTime;
 
 public class ItemMapper {
 
@@ -23,5 +28,16 @@ public class ItemMapper {
         item.setDescription(itemDto.getDescription());
         item.setAvailable(itemDto.getAvailable());
         return item;
+    }
+
+    public static ItemGetDto toItemGetDto(Item item, LocalDateTime lastBooking, LocalDateTime nextBooking) {
+        ItemGetDto itemGetDto = new ItemGetDto();
+        itemGetDto.setId(item.getId());
+        itemGetDto.setName(item.getName());
+        itemGetDto.setDescription(item.getDescription());
+        itemGetDto.setAvailable(item.getAvailable());
+        itemGetDto.setStartBooking(lastBooking);
+        itemGetDto.setEndBooking(nextBooking);
+        return itemGetDto;
     }
 }
